@@ -7,6 +7,7 @@ const {
   inject: { service },
   isPresent,
   run: { schedule },
+  run,
   set
 } = Ember;
 
@@ -42,7 +43,9 @@ const FormForComponent = Component.extend({
     if (errors) {
       for (let propertyName in errors) {
         if (isPresent(get(errors, propertyName))) {
-          set(this, 'tabindex', -1);
+          if (!(this.isDestroyed || this.isDestroying)) {
+            set(this, 'tabindex', -1);
+          }
           schedule('afterRender', () => {
             if (this.isDestroyed || this.isDestroying) {
               return;
@@ -59,7 +62,11 @@ const FormForComponent = Component.extend({
     submit(object) {
       let promise = get(this, 'submit')(object);
 
-      set(this, 'tabindex', undefined);
+      run(() => {
+        if (!(this.isDestroyed || this.isDestroying)) {
+          set(this, 'tabindex', undefined);
+        }
+      });
 
       if (promise && typeof promise.finally === 'function') {
         promise.finally(() => this.handleErrors(object));
